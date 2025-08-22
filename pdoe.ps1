@@ -14,7 +14,15 @@ if (-not (Test-Path $outputDir)) {
 }
 
 # Connect to SQL Server
-$server = New-Object Microsoft.SqlServer.Management.Smo.Server($serverName)
+
+# Create a custom connection string
+$connectionString = "Data Source=$($serverName);Initial Catalog=$($databaseName);Integrated Security=True;Encrypt=True;TrustServerCertificate=True;"
+ 
+# Create a ServerConnection using the connection string
+$connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection
+$connection.ConnectionString = $connectionString
+
+$server = New-Object Microsoft.SqlServer.Management.Smo.Server($connection)
 $database = $server.Databases[$databaseName]
 
 if ($null -eq $database) {
