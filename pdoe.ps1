@@ -100,12 +100,12 @@ if ($null -eq $database) {
 try {
     Export-Objects -typeName "Table" -objects $database.Tables -isTable $true
     Export-Objects -typeName "View" -objects $database.Views
-    # Export-Objects -typeName "StoredProcedure" -objects $database.StoredProcedures
-    # Export-Objects -typeName "User defined function" -objects $database.UserDefinedFunctions
-    # Export-Objects -typeName "Schema" -objects $database.Schemas
-    # Export-Objects -typeName "User" -objects $database.Users
-    # Export-Objects -typeName "Role" -objects $database.Roles
-    # Export-Objects -typeName "SqlAssembly" -objects $database.Assemblies
+    Export-Objects -typeName "StoredProcedure" -objects $database.StoredProcedures
+    Export-Objects -typeName "User defined function" -objects $database.UserDefinedFunctions
+    Export-Objects -typeName "Schema" -objects $database.Schemas
+    Export-Objects -typeName "User" -objects $database.Users
+    Export-Objects -typeName "Role" -objects $database.Roles
+    Export-Objects -typeName "SqlAssembly" -objects $database.Assemblies
 }
 catch {
     Write-Log -message $_.Exception.Message -level "ERROR"
