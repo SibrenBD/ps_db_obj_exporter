@@ -6,9 +6,9 @@ Import-Module SqlServer
 # Configuration
 $timestamp = Get-Date -Format "dd-MM-yyyy_HH-mm-ss"
 $serverName = "localhost"
-$databaseName = "AdventureWorks2022"
-$outputDir = "C:\Users\sibre\OneDrive\Bureaublad\ps-test"
-$logFile = "C:\Users\sibre\OneDrive\Bureaublad\ps-test\logs\Log_$timestamp.txt"
+$databaseName = ""
+$outputDir = ""
+$logFile = "Log_$timestamp.txt"
 
 # Create main output directory if it doesn't exist
 if (-not (Test-Path $outputDir)) {
@@ -108,8 +108,8 @@ try {
     # Export-Objects -typeName "SqlAssembly" -objects $database.Assemblies
 }
 catch {
-    Write-Log -Message $_.Exception.Message -level "ERROR"
+    Write-Log -message $_.Exception.Message -level "ERROR"
 }
 
-
+Write-log -message "Export complete. Files saved to: $outputDir"
 Write-Host "`nExport complete. Files saved to: $outputDir"
