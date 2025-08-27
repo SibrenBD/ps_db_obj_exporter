@@ -4,11 +4,11 @@
 Import-Module SqlServer
 
 # Configuration
-$timestamp = Get-Date -Format "dd-MM-yyyy_HH-mm-ss"
 $serverName = "localhost"
 $databaseName = ""
-$outputDir = ""
-$logFile = "Log_$timestamp.txt"
+$outputDir = "" # Directory where everything will be exported
+$timestamp = Get-Date -Format "dd-MM-yyyy_HH-mm-ss" # Timestamp for the log file name
+$logFile = "<path>\Log_$timestamp.txt" # File full path. Make sure to fill in the path
 
 # Create main output directory if it doesn't exist
 if (-not (Test-Path $outputDir)) {
