@@ -5,10 +5,10 @@ Import-Module SqlServer
 
 # Configuration
 $serverName = "localhost"
-$databaseName = ""
-$outputDir = "" # Directory where everything will be exported
+$databaseName = "AdventureWorks2022"
+$outputDir = "C:\Users\sibre\OneDrive\Bureaublad\ps-test\export1" # Directory where everything will be exported
 $timestamp = Get-Date -Format "dd-MM-yyyy_HH-mm-ss" # Timestamp for the log file name
-$logFile = "<path>\Log_$timestamp.txt" # File full path. Make sure to fill in the path
+$logFile = "C:\Users\sibre\OneDrive\Bureaublad\ps-test\Log_$timestamp.txt" # File full path. Make sure to fill in the path
 
 # Create main output directory if it doesn't exist
 if (-not (Test-Path $outputDir)) {
@@ -79,6 +79,56 @@ function Export-Objects {
     }
 }
 
+
+function Compare-Directories {
+    param (
+        [string]$dir1,
+        [string]$dir2
+    )
+
+    Write-Host "start compare"
+
+    # Get all .txt files recursively
+    $files1 = Get-ChildItem -Path $dir1 -Filter *.sql -Recurse -File
+    $files2 = Get-ChildItem -Path $dir2 -Filter *.sql -Recurse -File
+
+    # Create a lookup table for dir2 files by relative path
+    $relativeFiles2 = @{}
+    foreach ($file in $files2) {
+        $relativePath = $file.FullName.Substring($dir2.Length).TrimStart('\')
+        $relativeFiles2[$relativePath] = $file.FullName
+    }
+
+    foreach ($file1 in $files1) {
+        $relativePath = $file1.FullName.Substring($dir1.Length).TrimStart('\')
+
+        if ($relativeFiles2.ContainsKey($relativePath)) {
+            $file2Path = $relativeFiles2[$relativePath]
+            $content1 = Get-Content $file1.FullName
+            $content2 = Get-Content $file2Path
+
+            $diff = Compare-Object $content1 $content2
+
+            if ($diff) {
+                Write-Host "DIFFERENT: $relativePath"
+                $diff | Format-Table InputObject, SideIndicator
+            } else {
+                Write-Host "MATCH: $relativePath"
+            }
+        } else {
+            Write-Host "ONLY IN DIR1: $relativePath"
+        }
+    }
+
+    # Check for files only in dir2
+    foreach ($relativePath in $relativeFiles2.Keys) {
+        $file1Path = Join-Path $dir1 $relativePath
+        if (-not (Test-Path $file1Path)) {
+            Write-Host "ONLY IN DIR2: $relativePath"
+        }
+    }
+}
+
 # Connect to SQL Server
 
 # Create a custom connection string
@@ -98,14 +148,14 @@ if ($null -eq $database) {
 
 # Export each object type to its designated subdirectory
 try {
-    Export-Objects -typeName "Table" -objects $database.Tables -isTable $true
-    Export-Objects -typeName "View" -objects $database.Views
-    Export-Objects -typeName "StoredProcedure" -objects $database.StoredProcedures
-    Export-Objects -typeName "User defined function" -objects $database.UserDefinedFunctions
-    Export-Objects -typeName "Schema" -objects $database.Schemas
-    Export-Objects -typeName "User" -objects $database.Users
-    Export-Objects -typeName "Role" -objects $database.Roles
-    Export-Objects -typeName "SqlAssembly" -objects $database.Assemblies
+    # Export-Objects -typeName "Table" -objects $database.Tables -isTable $true
+    # Export-Objects -typeName "View" -objects $database.Views
+    # Export-Objects -typeName "StoredProcedure" -objects $database.StoredProcedures
+    # Export-Objects -typeName "User defined function" -objects $database.UserDefinedFunctions
+    # Export-Objects -typeName "Schema" -objects $database.Schemas
+    # Export-Objects -typeName "User" -objects $database.Users
+    # Export-Objects -typeName "Role" -objects $database.Roles
+    # Export-Objects -typeName "SqlAssembly" -objects $database.Assemblies
 }
 catch {
     Write-Log -message $_.Exception.Message -level "ERROR"
@@ -113,3 +163,6 @@ catch {
 
 Write-log -message "Export complete. Files saved to: $outputDir"
 Write-Host "`nExport complete. Files saved to: $outputDir"
+
+# Start compare function
+Compare-Directories -dir1 "$outputDir" -dir2 "C:\Users\sibre\OneDrive\Bureaublad\ps-test\export2"
