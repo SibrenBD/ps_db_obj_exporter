@@ -6,20 +6,30 @@ Import-Module SqlServer
 # Configuration
 $serverName = "localhost"
 $databaseName = ""
-$outputDir = ""
+$outputDir = "" # Directory where everything will be exported
+$timestamp = Get-Date -Format "dd-MM-yyyy_HH-mm-ss" # Timestamp for the log file name
+$logFile = "<path>\Log_$timestamp.txt" # File full path. Make sure to fill in the path
 
 # Create main output directory if it doesn't exist
 if (-not (Test-Path $outputDir)) {
     New-Item -ItemType Directory -Path $outputDir | Out-Null
 }
 
-# Connect to SQL Server
-$server = New-Object Microsoft.SqlServer.Management.Smo.Server($serverName)
-$database = $server.Databases[$databaseName]
+# Create logs directory if it doesn't exist
+$logDir = Split-Path $logFile
+if (-not (Test-Path $logDir)) {
+    New-Item -ItemType Directory -Path $logDir -Force
+}
 
-if ($null -eq $database) {
-    Write-Host "Database '$databaseName' not found on server '$serverName'."
-    exit
+# Function to write messages to the log file
+function Write-Log {
+    param (
+        [string]$message,
+        [string]$level = "INFO"
+    )
+    $timestamp = Get-Date -Format "dd/MM/yyyy HH:mm:ss"
+    $logEntry = "$timestamp [$Level] $Message"
+    Add-Content -Path $logFile -Value $logEntry
 }
 
 # Function to script and export objects
@@ -64,18 +74,42 @@ function Export-Objects {
             $localScripter.Script($obj)
 
             Write-Host("Exported file: $($obj.Schema)_$($obj.Name)_$typeName.sql")
+            Write-Log -message "Exported file: $($obj.Schema)_$($obj.Name)_$typeName.sql" -level "EXPORT"
         }
     }
 }
 
-# Export each object type to its designated subdirectory
-Export-Objects -typeName "Table" -objects $database.Tables -isTable $true
-Export-Objects -typeName "View" -objects $database.Views
-Export-Objects -typeName "StoredProcedure" -objects $database.StoredProcedures
-Export-Objects -typeName "User defined function" -objects $database.UserDefinedFunctions
-Export-Objects -typeName "Schema" -objects $database.Schemas
-Export-Objects -typeName "User" -objects $database.Users
-Export-Objects -typeName "Role" -objects $database.Roles
-Export-Objects -typeName "SqlAssembly" -objects $database.Assemblies
+# Connect to SQL Server
 
+# Create a custom connection string
+$connectionString = "Data Source=$($serverName);Initial Catalog=$($databaseName);Integrated Security=True;Encrypt=True;TrustServerCertificate=True;"
+ 
+# Create a ServerConnection using the connection string
+$connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection
+$connection.ConnectionString = $connectionString
+
+$server = New-Object Microsoft.SqlServer.Management.Smo.Server($connection)
+$database = $server.Databases[$databaseName]
+
+if ($null -eq $database) {
+    Write-Host "Database '$databaseName' not found on server '$serverName'."
+    exit
+}
+
+# Export each object type to its designated subdirectory
+try {
+    Export-Objects -typeName "Table" -objects $database.Tables -isTable $true
+    Export-Objects -typeName "View" -objects $database.Views
+    Export-Objects -typeName "StoredProcedure" -objects $database.StoredProcedures
+    Export-Objects -typeName "User defined function" -objects $database.UserDefinedFunctions
+    Export-Objects -typeName "Schema" -objects $database.Schemas
+    Export-Objects -typeName "User" -objects $database.Users
+    Export-Objects -typeName "Role" -objects $database.Roles
+    Export-Objects -typeName "SqlAssembly" -objects $database.Assemblies
+}
+catch {
+    Write-Log -message $_.Exception.Message -level "ERROR"
+}
+
+Write-log -message "Export complete. Files saved to: $outputDir"
 Write-Host "`nExport complete. Files saved to: $outputDir"
