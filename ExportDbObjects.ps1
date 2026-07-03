@@ -11,9 +11,11 @@
 
 # 2025-11-26:1414, booo01;
 
-
 param(
-	[Parameter(Mandatory=$true)][ValidateSet("MSD-BI01", "MSD-CC01")][string]$parServerName
+	[Parameter(Mandatory=$true)]
+	[ValidateSet("MSD-BI01", "MSD-CC01")]
+	[string]$parServerName
+	
 	,[Parameter(Mandatory=$true)]
 	[ValidateSet(  #ArgumentCompletions
 		"dbBiCon"
@@ -30,18 +32,22 @@ param(
 		,"dbMiBron"
 	)]
 	[string]$parDatabaseName
+	
 	,[string]$parObjectName
-	,[ValidateSet("Tables", "Views", "UserDefinedFunctions", "StoredProcedures", "Users", "Roles", "Schemas")][string]$parObjectType
-	,[string]$parOutputDir = "C:\Users\adm_booo01\src\dbExport"
+	
+	,[ValidateSet("Tables", "Views", "UserDefinedFunctions", "StoredProcedures", "Users", "Roles", "Schemas")]
+	[string]$parObjectType
+	
+	,[string]$parOutputDir = "C:\Users\adm_booo01\src\_exported"
 )
 
 # $parServerName = "msd-bi01"
 # $parDatabaseName = "dbBiDwh"
 # $parObjectName = ""
 # $parObjectType = ""
-# $parOutputDir = "C:\Users\adm_booo01\src\dbExport"
+# $parOutputDir = "C:\Users\adm_booo01\src\_exported"
 
-#Import-Module SqlServer
+Import-Module SqlServer
 
 # Reserved device names in Windows
 $reservedNames = @("CON","PRN","AUX","NUL","COM1","COM2","COM3","COM4","COM5","COM6","COM7","COM8","COM9","LPT1","LPT2","LPT3","LPT4","LPT5","LPT6","LPT7","LPT8","LPT9")
